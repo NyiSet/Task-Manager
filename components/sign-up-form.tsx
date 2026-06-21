@@ -21,20 +21,31 @@ export function SignUpForm({
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [errorField, setErrorField] = useState<
+    "email" | "password" | "repeatPassword" | null
+  >(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  const clearError = () => {
+    setError(null);
+    setErrorField(null);
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);
-    setError(null);
+    clearError();
 
     if (password !== repeatPassword) {
       setError("Passwords do not match");
+      setErrorField("repeatPassword");
+      setRepeatPassword("");
       setIsLoading(false);
       return;
     }
@@ -44,13 +55,26 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: fullName.trim(),
+          },
         },
       });
       if (error) throw error;
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      const message =
+        error instanceof Error ? error.message : "Could not create account";
+      const normalizedMessage = message.toLowerCase();
+      setError(message);
+      setErrorField(
+        normalizedMessage.includes("password") ? "password" : "email"
+      );
+      if (normalizedMessage.includes("password")) {
+        setPassword("");
+        setRepeatPassword("");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -67,14 +91,39 @@ export function SignUpForm({
           <form onSubmit={handleSignUp}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
+                <Label htmlFor="full-name">Full name</Label>
+                <Input
+                  id="full-name"
+                  type="text"
+                  placeholder="Alex Morgan"
+                  required
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    clearError();
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    clearError();
+                  }}
+                  placeholder={
+                    errorField === "email" && error ? error : "m@example.com"
+                  }
+                  aria-invalid={errorField === "email"}
+                  className={
+                    errorField === "email"
+                      ? "border-rose-300 placeholder:text-rose-500 focus-visible:ring-rose-100"
+                      : undefined
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -86,7 +135,21 @@ export function SignUpForm({
                   type="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    clearError();
+                  }}
+                  placeholder={
+                    errorField === "password" && error
+                      ? error
+                      : "Create a password"
+                  }
+                  aria-invalid={errorField === "password"}
+                  className={
+                    errorField === "password"
+                      ? "border-rose-300 placeholder:text-rose-500 focus-visible:ring-rose-100"
+                      : undefined
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -98,10 +161,23 @@ export function SignUpForm({
                   type="password"
                   required
                   value={repeatPassword}
-                  onChange={(e) => setRepeatPassword(e.target.value)}
+                  onChange={(e) => {
+                    setRepeatPassword(e.target.value);
+                    clearError();
+                  }}
+                  placeholder={
+                    errorField === "repeatPassword" && error
+                      ? error
+                      : "Repeat your password"
+                  }
+                  aria-invalid={errorField === "repeatPassword"}
+                  className={
+                    errorField === "repeatPassword"
+                      ? "border-rose-300 placeholder:text-rose-500 focus-visible:ring-rose-100"
+                      : undefined
+                  }
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating an account..." : "Sign up"}
               </Button>

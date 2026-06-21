@@ -12,7 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DatePicker } from "@/components/ui/date-picker";
-import type { Task, TeamMember } from "@/components/board/task-card";
+import {
+  getMemberDisplayName,
+  type Task,
+  type TeamMember,
+} from "@/components/board/task-card";
 
 export type UpdateTaskValues = {
   title: string;
@@ -106,7 +110,7 @@ export default function TaskDetailsDialog({
     selectedMembers.length === 0
       ? "Select team members"
       : selectedMembers.length === 1
-      ? selectedMembers[0].name
+      ? getMemberDisplayName(selectedMembers[0])
       : `${selectedMembers.length} members selected`;
 
   return (
@@ -256,7 +260,7 @@ export default function TaskDetailsDialog({
                           toggleAssignee(member.id, checked === true)
                         }
                       >
-                        {member.name}
+                        {getMemberDisplayName(member)}
                       </DropdownMenuCheckboxItem>
                     ))
                   )}
@@ -273,17 +277,17 @@ export default function TaskDetailsDialog({
                       {member.avatar_url ? (
                         <img
                           src={member.avatar_url}
-                          alt={member.name}
+                          alt={getMemberDisplayName(member)}
                           className="h-6 w-6 rounded-full object-cover"
                         />
                       ) : (
                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[10px] font-semibold text-white">
-                          {getInitials(member.name)}
+                          {getInitials(getMemberDisplayName(member))}
                         </div>
                       )}
 
                       <span className="text-xs font-medium text-slate-700">
-                        {member.name}
+                        {getMemberDisplayName(member)}
                       </span>
 
                       <button
@@ -294,7 +298,7 @@ export default function TaskDetailsDialog({
                           )
                         }
                         className="text-slate-400 transition hover:text-slate-600"
-                        aria-label={`Remove ${member.name}`}
+                        aria-label={`Remove ${getMemberDisplayName(member)}`}
                       >
                         ×
                       </button>

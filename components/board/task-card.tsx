@@ -2,7 +2,7 @@
 
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
-import { Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,15 @@ export type TaskStatus = "todo" | "in_progress" | "in_review" | "done";
 
 export type TeamMember = {
   id: string;
-  name: string;
+  board_id: string | null;
+  owner_id: string;
+  member_user_id: string;
+  email: string;
+  name: string | null;
   avatar_url: string | null;
-  user_id: string;
+  role: "admin" | "member";
+  status: "active" | "invited";
+  invited_at: string;
   created_at: string;
 };
 
@@ -33,6 +39,7 @@ export type Task = {
   status: TaskStatus;
   priority: "low" | "normal" | "high" | null;
   due_date: string | null;
+  board_id: string | null;
   user_id: string;
   created_at: string;
   task_assignees?: TaskAssignee[];
@@ -42,6 +49,7 @@ type TaskCardProps = {
   task: Task;
   cardTint: string;
   isUpdating?: boolean;
+  canManageTasks?: boolean;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (task: Task) => void;
 };
@@ -49,12 +57,12 @@ type TaskCardProps = {
 function getPriorityClasses(priority: Task["priority"]) {
   switch (priority) {
     case "low":
-      return "bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15";
+      return "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50";
     case "high":
-      return "bg-rose-500/15 text-rose-700 hover:bg-rose-500/15";
+      return "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-50";
     case "normal":
     default:
-      return "bg-slate-900/10 text-slate-700 hover:bg-slate-900/10";
+      return "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-100";
   }
 }
 
@@ -108,10 +116,15 @@ function getInitials(name: string) {
     .join("");
 }
 
+export function getMemberDisplayName(member: TeamMember) {
+  return member.name?.trim() || member.email;
+}
+
 export default function TaskCard({
   task,
   cardTint,
   isUpdating = false,
+  canManageTasks = true,
   onEditTask,
   onDeleteTask,
 }: TaskCardProps) {
@@ -124,6 +137,7 @@ export default function TaskCard({
     isDragging,
   } = useSortable({
     id: task.id,
+    disabled: !canManageTasks,
     data: {
       type: "task",
       task,
@@ -145,7 +159,7 @@ export default function TaskCard({
     <Card
       ref={setNodeRef}
       style={style}
-      className={`group rounded-2xl border border-white/70 bg-white/90 shadow-[0_8px_24px_-14px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-14px_rgba(15,23,42,0.35)] ${cardTint} ${
+      className={`group rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md ${cardTint} ${
         isDragging
           ? "scale-[1.02] opacity-70 ring-2 ring-indigo-300 shadow-[0_20px_40px_-20px_rgba(79,70,229,0.45)]"
           : ""
@@ -154,45 +168,47 @@ export default function TaskCard({
       <CardContent className="p-4">
         <div
           {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing"
+          {...(canManageTasks ? listeners : {})}
+          className={canManageTasks ? "cursor-grab active:cursor-grabbing" : ""}
         >
           <div className="flex items-start justify-between gap-3">
-            <p className="text-sm font-semibold leading-6 text-slate-900">
+            <p className="text-sm font-semibold leading-5 text-slate-950">
               {task.title}
             </p>
 
-            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:transition sm:group-hover:opacity-100">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditTask?.(task);
-                }}
-                aria-label={`Edit ${task.title}`}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
+            {canManageTasks && (
+              <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:transition sm:group-hover:opacity-100">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditTask?.(task);
+                  }}
+                  aria-label={`Edit ${task.title}`}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
 
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteTask?.(task);
-                }}
-                aria-label={`Delete ${task.title}`}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteTask?.(task);
+                  }}
+                  aria-label={`Delete ${task.title}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           {task.description && (
@@ -204,7 +220,7 @@ export default function TaskCard({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {task.priority && (
               <Badge
-                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${getPriorityClasses(
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${getPriorityClasses(
                   task.priority
                 )}`}
               >
@@ -216,6 +232,7 @@ export default function TaskCard({
               <Badge
                 className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${dueDateState.className}`}
               >
+                <CalendarDays className="mr-1 h-3 w-3" />
                 {dueDateState.label}
               </Badge>
             )}
@@ -227,10 +244,10 @@ export default function TaskCard({
                 {assignees.slice(0, 3).map((member) => (
                   <div
                     key={member.id}
-                    title={member.name}
+                    title={getMemberDisplayName(member)}
                     className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-slate-900 text-xs font-semibold text-white shadow-sm"
                   >
-                    {getInitials(member.name)}
+                    {getInitials(getMemberDisplayName(member))}
                   </div>
                 ))}
 

@@ -20,6 +20,7 @@ type BoardColumnProps = {
   cardTint: string;
   tasks: Task[];
   updatingTaskId?: string | null;
+  canManageTasks?: boolean;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (task: Task) => void;
 };
@@ -33,6 +34,7 @@ export default function BoardColumn({
   cardTint,
   tasks,
   updatingTaskId,
+  canManageTasks = true,
   onEditTask,
   onDeleteTask,
 }: BoardColumnProps) {
@@ -47,13 +49,13 @@ export default function BoardColumn({
   return (
     <section
       ref={setNodeRef}
-      className={`w-[320px] shrink-0 rounded-3xl border p-4 backdrop-blur-xl shadow-[0_10px_40px_-18px_rgba(15,23,42,0.25)] transition xl:w-auto ${
-        isOver ? "bg-indigo-50/30 ring-2 ring-indigo-300/70" : ""
+      className={`w-[320px] shrink-0 rounded-2xl border p-3 shadow-sm transition xl:w-auto ${
+        isOver ? "ring-2 ring-slate-300" : ""
       } ${columnBg}`}
     >
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between px-1">
         <div className="flex items-center gap-3">
-          <span className={`h-3 w-3 rounded-full ${accent}`} />
+          <span className={`h-2.5 w-2.5 rounded-full ${accent}`} />
           <h2 className="text-sm font-semibold tracking-wide text-slate-900">
             {title}
           </h2>
@@ -70,9 +72,9 @@ export default function BoardColumn({
         items={tasks.map((task) => task.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="min-h-[120px] space-y-3">
+        <div className="min-h-[360px] space-y-3">
           {tasks.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300/80 bg-white/50 p-5 text-center">
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white/70 p-5 text-center">
               <p className="text-sm font-medium text-slate-600">No tasks yet</p>
               <p className="mt-1 text-xs text-slate-500">
                 Drag a task here or create a new one.
@@ -85,6 +87,7 @@ export default function BoardColumn({
                 task={task}
                 cardTint={cardTint}
                 isUpdating={updatingTaskId === task.id}
+                canManageTasks={canManageTasks}
                 onEditTask={onEditTask}
                 onDeleteTask={onDeleteTask}
               />

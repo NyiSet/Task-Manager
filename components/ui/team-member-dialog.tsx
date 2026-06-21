@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 
 export type CreateTeamMemberValues = {
-  name: string;
-  avatar_url: string | null;
+  email: string;
+  role: "admin" | "member";
 };
 
 type TeamMemberDialogProps = {
@@ -25,12 +25,12 @@ export default function TeamMemberDialog({
   creating = false,
 }: TeamMemberDialogProps) {
   const [name, setName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
+  const [role, setRole] = useState<"admin" | "member">("member");
 
   useEffect(() => {
     if (!open) {
       setName("");
-      setAvatarUrl("");
+      setRole("member");
     }
   }, [open]);
 
@@ -42,8 +42,8 @@ export default function TeamMemberDialog({
     if (!name.trim()) return;
 
     await onCreateTeamMember({
-      name: name.trim(),
-      avatar_url: avatarUrl.trim() || null,
+      email: name.trim().toLowerCase(),
+      role,
     });
   };
 
@@ -60,31 +60,32 @@ export default function TeamMemberDialog({
         <CardContent className="p-0">
           <div className="border-b border-slate-200/70 px-6 py-5">
             <div className="inline-flex items-center rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-medium tracking-wide text-indigo-700">
-              Team Member
+              Team Invite
             </div>
 
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
-              Add a team member
+              Invite a registered member
             </h2>
 
             <p className="mt-1 text-sm text-slate-600">
-              Add someone to your board so tasks can be assigned later.
+              Only users who already have an account can be added to your workspace.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6">
             <div className="space-y-2">
               <Label
-                htmlFor="team-member-name"
+                htmlFor="team-member-email"
                 className="text-sm font-medium text-slate-700"
               >
-                Name
+                Member email
               </Label>
               <Input
-                id="team-member-name"
+                id="team-member-email"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Annie Smith"
+                type="email"
+                placeholder="teammate@example.com"
                 className="rounded-2xl border-slate-200 bg-white py-6 text-sm text-slate-900 focus-visible:ring-indigo-100"
                 required
               />
@@ -92,18 +93,27 @@ export default function TeamMemberDialog({
 
             <div className="space-y-2">
               <Label
-                htmlFor="team-member-avatar"
+                htmlFor="team-member-role"
                 className="text-sm font-medium text-slate-700"
               >
-                Avatar URL
+                Role
               </Label>
-              <Input
-                id="team-member-avatar"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="https://..."
-                className="rounded-2xl border-slate-200 bg-white py-6 text-sm text-slate-900 focus-visible:ring-indigo-100"
-              />
+              <div className="grid grid-cols-2 gap-2" id="team-member-role">
+                {(["member", "admin"] as const).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setRole(item)}
+                    className={`rounded-2xl border px-4 py-3 text-sm font-medium capitalize transition ${
+                      role === item
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-slate-200/70 pt-5">
@@ -121,7 +131,7 @@ export default function TeamMemberDialog({
                 disabled={creating}
                 className="rounded-xl bg-slate-900 text-white hover:bg-slate-800"
               >
-                {creating ? "Adding..." : "Add Member"}
+                {creating ? "Inviting..." : "Invite Member"}
               </Button>
             </div>
           </form>

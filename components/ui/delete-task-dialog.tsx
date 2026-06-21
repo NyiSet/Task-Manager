@@ -44,7 +44,7 @@ export default function DeleteTaskDialog({
             <p className="mt-2 text-sm leading-6 text-slate-600">
               You are about to delete{" "}
               <span className="font-semibold text-slate-900">
-                "{task.title}"
+                &quot;{task.title}&quot;
               </span>
               . This action cannot be undone.
             </p>
